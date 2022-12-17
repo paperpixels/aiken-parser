@@ -47,7 +47,6 @@ class AikenParser
 
             $lines = file($this->file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
             foreach ($lines as $line) {
-
                 if ($this->isCorrectAnswer($line)) {
                     $testItem->validateDoesNotHaveTooManyDistractors();
                     $testItem->setCorrectAnswer($this->parseCorrectAnswerKey($line));
@@ -57,9 +56,9 @@ class AikenParser
                     $testItem = new TestItem();
 
                 } elseif ($this->isDistractor($line)) {
-                    $testItem->appendDistractor($this->parseDistractor($line));
+	                $testItem->appendDistractor($this->parseDistractor($line));
                 } else {
-                    $testItem->setStem($line);
+	                $testItem->setStem($line);
                 }
             }
         }
@@ -109,7 +108,9 @@ class AikenParser
      */
     protected function isDistractor($line)
     {
-        foreach (TestItem::$distractorDetectorSlugs as $key => $value) {
+        foreach (TestItem::getDistractorDetectorSlugs() as $value) {
+	        $key = "$value. ";
+
             if (strpos($line, $key) === 0) {
                 return true;
             }
@@ -128,6 +129,11 @@ class AikenParser
         $key = substr($line, 0, 3);
         $value = trim(substr($line, 3));
 
-        return new Distractor(TestItem::$distractorDetectorSlugs[$key], $value);
+	    preg_match( "#([A-Z])\.\s#", $key, $matches );
+	    if ( empty( $matches[1] ) ) {
+		    throw new \Exception( 'Unable to parse the distractor from this line: ' . $line );
+	    }
+
+	    return new Distractor( $matches[1], $value );
     }
 }

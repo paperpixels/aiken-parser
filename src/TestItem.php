@@ -14,15 +14,11 @@ use Fisdap\Aiken\Parser\Contracts\Arrayable;
 class TestItem implements Arrayable
 {
     const STEM = 'stem';
-    const CORRECT_ANSWER = 'correctAnswer';
-    const DISTRACTORS = 'distractors';
+	const DISTRACTORS = 'distractors';
+	const CORRECT_ANSWER = 'correctAnswer';
+	const CORRECT_ANSWER_ID = 'correctAnswerId';
 
     const CORRECT_ANSWER_LINE_DETECTOR_SLUG = 'ANSWER: ';
-    const CORRECT_ANSWER_LINE_DETECTOR_SLUG_SPANISH = 'RESPUESTA: ';
-    const DISTRACTOR_A_LINE_DETECTOR_SLUG = 'A. ';
-    const DISTRACTOR_B_LINE_DETECTOR_SLUG = 'B. ';
-    const DISTRACTOR_C_LINE_DETECTOR_SLUG = 'C. ';
-    const DISTRACTOR_D_LINE_DETECTOR_SLUG = 'D. ';
 
     /**
      * Correct answer detector slugs
@@ -31,22 +27,28 @@ class TestItem implements Arrayable
      */
     public static $correctAnswerDetectorSlugs = [
         self::CORRECT_ANSWER_LINE_DETECTOR_SLUG,
-        self::CORRECT_ANSWER_LINE_DETECTOR_SLUG_SPANISH
     ];
 
     /**
      * Keys used to define distractors from the answer
+     * By default this is initialized to A, B, C, D, E, F, G, H, I, J...
      *
      * @var array
      */
-    public static $distractorDetectorSlugs = [
-        self::DISTRACTOR_A_LINE_DETECTOR_SLUG => 'A',
-        self::DISTRACTOR_B_LINE_DETECTOR_SLUG => 'B',
-        self::DISTRACTOR_C_LINE_DETECTOR_SLUG => 'C',
-        self::DISTRACTOR_D_LINE_DETECTOR_SLUG => 'D'
-    ];
+    public static $distractorDetectorSlugs = [];
 
-    /**
+	/**
+	 * @return array
+	 */
+	public static function getDistractorDetectorSlugs(){
+		if( empty( self::$distractorDetectorSlugs ) ){
+			self::$distractorDetectorSlugs = range('A', 'Z');
+		}
+
+		return self::$distractorDetectorSlugs;
+	}
+
+	/**
      * Test item stem
      *
      * @var string
@@ -67,7 +69,14 @@ class TestItem implements Arrayable
      */
     protected $correctAnswer;
 
-    /**
+	/**
+	 * Test item correct answer key
+	 *
+	 * @var int
+	 */
+	protected $correctAnswerId;
+
+	/**
      * Get collection of distractors object
      *
      * @return DistractorCollection
@@ -113,7 +122,9 @@ class TestItem implements Arrayable
      */
     public function setCorrectAnswer($answerKey)
     {
-        $this->correctAnswer = $this->getDistractorCollection()->getCorrectAnswerValue($answerKey);
+	    $this->correctAnswer   = $this->getDistractorCollection()->getCorrectAnswerValue( $answerKey );
+	    $this->correctAnswerId = array_search( $answerKey, array_values( self::getDistractorDetectorSlugs() ) );
+
         return $this;
     }
 
@@ -124,7 +135,7 @@ class TestItem implements Arrayable
      */
     public function validate()
     {
-        if (count($this->getDistractorCollection()->toArray()) < 3) {
+        if (count($this->getDistractorCollection()->toArray()) < 2) {
             throw new \Exception('An issue was encountered with the following text: ' . $this->stem . '.  Please check this file for leading and trailing spaces. No items were imported.');
         }
 
@@ -144,9 +155,12 @@ class TestItem implements Arrayable
      */
     public function validateDoesNotHaveTooManyDistractors()
     {
+		// uncomment if you want to limit the distractors
+	    /*
         if (count($this->getDistractorCollection()->toArray()) > 4) {
             throw new \Exception('An issue was encountered with the following text: ' . $this->stem . '.  This stem has too many distractors. Check that an ANSWER is not missing from previous test item.');
         }
+	    */
     }
 
     /**
@@ -160,9 +174,10 @@ class TestItem implements Arrayable
         $this->validate();
 
         return [
-            self::STEM          => $this->stem,
-            self::DISTRACTORS   => $this->getDistractorCollection()->toArray(),
-            self::CORRECT_ANSWER => $this->correctAnswer,
+	        self::STEM              => $this->stem,
+	        self::DISTRACTORS       => $this->getDistractorCollection()->toArray(),
+	        self::CORRECT_ANSWER    => $this->correctAnswer,
+	        self::CORRECT_ANSWER_ID => $this->correctAnswerId,
         ];
     }
 }
