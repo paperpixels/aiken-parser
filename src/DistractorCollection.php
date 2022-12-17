@@ -43,7 +43,8 @@ class DistractorCollection implements Arrayable
             if ($this->distractors[$i]->key == $key) {
                 $value = $this->distractors[$i]->value;
 
-                unset($this->distractors[$i]);
+				// uncomment to remove the correct answer from the distractors
+                // unset($this->distractors[$i]);
 
                 return $value;
             }
